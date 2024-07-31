@@ -1,3 +1,4 @@
+// Selecting the DOM Elements
 let addBtn = document.querySelector(".add-btn");
 let removeBtn = document.querySelector(".remove-btn");
 let modalCont = document.querySelector(".modal-cont");
@@ -10,8 +11,8 @@ let colors = ["lightpink", "lightgreen", "lightblue", "black"];
 
 let toolboxColors = document.querySelectorAll(".color");
 
-let lockClass = "fa-lock"; // closed lock
-let unlockClass = "fa-lock-open"; // open-lock
+let lockClass = "fa-lock"; // Closed lock icon
+let unlockClass = "fa-lock-open"; // Open-lock icon
 
 let addTaskFlag = false;
 let removeTaskFlag = false;
@@ -20,9 +21,10 @@ let modalPriorityColor = colors[colors.length - 1];
 
 let ticketsArr = [];
 
-console.log(addTaskFlag);
+// console.log(addTaskFlag);
 
 // local storage
+// Check if there are any tickets stored in local storage and load them
 if (localStorage.getItem("tickets")) {
 	ticketsArr = JSON.parse(localStorage.getItem("tickets"));
 	ticketsArr.forEach(function (ticket) {
@@ -30,7 +32,7 @@ if (localStorage.getItem("tickets")) {
 	});
 }
 
-// Making Tasks visible according to colors
+// Filtering Tasks based on the selected toolbox color
 for (let i = 0; i < toolboxColors.length; i++) {
 	toolboxColors[i].addEventListener("click", function () {
 		let selectedToolBoxColor = toolboxColors[i].classList[0];
@@ -38,9 +40,7 @@ for (let i = 0; i < toolboxColors.length; i++) {
 		let filteredTickets = ticketsArr.filter(function (ticket) {
 			return selectedToolBoxColor === ticket.ticketColor;
 		});
-
-		console.log(filteredTickets);
-
+		// console.log(filteredTickets);
 		let allTickets = document.querySelectorAll(".ticket-cont");
 
 		for (let i = 0; i < allTickets.length; i++) {
@@ -56,13 +56,12 @@ for (let i = 0; i < toolboxColors.length; i++) {
 		});
 	});
 
+	// Display all tickets when toolbox color is double-clicked
 	toolboxColors[i].addEventListener("dblclick", function () {
 		let allTickets = document.querySelectorAll(".ticket-cont");
-
 		for (let i = 0; i < allTickets.length; i++) {
 			allTickets[i].remove();
 		}
-
 		ticketsArr.forEach(function (ticketObj) {
 			createTicket(
 				ticketObj.ticketColor,
@@ -73,7 +72,7 @@ for (let i = 0; i < toolboxColors.length; i++) {
 	});
 }
 
-// Selecting color for your task
+// Selecting priority color for the new task
 allPriorityColors.forEach(function (colorElem) {
 	colorElem.addEventListener("click", function () {
 		allPriorityColors.forEach(function (priorityColorElem) {
@@ -81,12 +80,14 @@ allPriorityColors.forEach(function (colorElem) {
 		});
 		colorElem.classList.add("active");
 
-		modalPriorityColor = colorElem.classList[0]; // lightpink
+		// Set the default priority color to 'lightpink'
+		modalPriorityColor = colorElem.classList[0];
 	});
 });
 
+// Handling the add button click event
 addBtn.addEventListener("click", function () {
-	// Display the model
+	// Toggle the modal visibility
 	addTaskFlag = !addTaskFlag;
 
 	if (addTaskFlag == true) {
@@ -96,28 +97,31 @@ addBtn.addEventListener("click", function () {
 	}
 });
 
+// Handling the remove button click event
 removeBtn.addEventListener("click", function () {
 	removeTaskFlag = !removeTaskFlag;
 	if (removeTaskFlag == true) {
-		alert("delete button has been activated");
+		alert("Delete Button Has Been Activated");
 		removeBtn.style.color = "red";
 	} else {
 		removeBtn.style.color = "white";
 	}
 });
 
+// Handling the keydown event in the modal (Shift key to create a ticket)
 modalCont.addEventListener("keydown", function (e) {
 	let key = e.key;
 	if (key === "Shift") {
-		createTicket(modalPriorityColor, textAreaCont.value); // ticket generation
-		modalCont.style.display = "none";
-		console.log(textAreaCont.value);
-		textAreaCont.value = "";
+		createTicket(modalPriorityColor, textAreaCont.value); // Create a new ticket
+		modalCont.style.display = "none"; // Hide the modal
+		// console.log(textAreaCont.value);
+		textAreaCont.value = ""; // Clear the text area
 	}
 });
 
+// Function to create a new ticket
 function createTicket(ticketColor, ticketTask, ticketID) {
-	let id = ticketID || shortid();
+	let id = ticketID || shortid(); // generate a unique ID if not provided
 	let ticketCont = document.createElement("div");
 	ticketCont.setAttribute("class", "ticket-cont");
 
@@ -129,42 +133,37 @@ function createTicket(ticketColor, ticketTask, ticketID) {
     </div>
     `;
 
-	mainCont.appendChild(ticketCont);
+	mainCont.appendChild(ticketCont); // add the ticket to the main container
 
-	handleRemoval(ticketCont, id);
+	handleRemoval(ticketCont, id); // handle ticket removal
+	handleLock(ticketCont, id); // handle ticket locking / unlocking
+	handleColor(ticketCont, id); // handle ticket color change
 
-	handleLock(ticketCont, id);
-
-	handleColor(ticketCont, id);
-
+	// Add the new ticket to the array and local storage if it's a new ticket
 	if (!ticketID) {
 		ticketsArr.push({ ticketColor, ticketTask, ticketID: id });
 		localStorage.setItem("tickets", JSON.stringify(ticketsArr));
 	}
-
-	console.log(ticketsArr);
+	// console.log(ticketsArr);
 }
 
+// Function to handle ticket removal
 function handleRemoval(ticket, id) {
 	ticket.addEventListener("click", function () {
 		if (!removeTaskFlag) return;
 
 		let idx = getTicketIdx(id);
-
-		ticket.remove(); // ui removal
-
-		let deletedElement = ticketsArr.splice(idx, 1);
-		console.log(deletedElement);
-
+		ticket.remove(); // remove the ticket from the UI
+		let deletedElement = ticketsArr.splice(idx, 1); // remove the ticket from the array
+		// console.log(deletedElement);
 		localStorage.setItem("tickets", JSON.stringify(ticketsArr));
 	});
 }
 
+// Function to handle ticket locking / unlocking
 function handleLock(ticket, id) {
 	let ticketLockElem = ticket.querySelector(".ticket-lock");
-
 	let ticketLockIcon = ticketLockElem.children[0];
-
 	let ticketTaskArea = ticket.querySelector(".task-area");
 
 	ticketLockIcon.addEventListener("click", function () {
@@ -178,11 +177,13 @@ function handleLock(ticket, id) {
 			ticketLockIcon.classList.add(lockClass);
 			ticketTaskArea.setAttribute("contenteditable", "false");
 		}
+		// Update the task content in the array and local storage
 		ticketsArr[ticketIdx].ticketTask = ticketTaskArea.innerText; // updated task
 		localStorage.setItem("tickets", JSON.stringify(ticketsArr));
 	});
 }
 
+// Function to handle ticket color change
 function handleColor(ticket, id) {
 	let ticketColorBand = ticket.querySelector(".ticket-color");
 	ticketColorBand.addEventListener("click", function () {
@@ -200,17 +201,17 @@ function handleColor(ticket, id) {
 		ticketColorBand.classList.remove(currentColor);
 		ticketColorBand.classList.add(newTicketColor);
 
+		// Update the ticket color in the array and local storage
 		ticketsArr[ticketIdx].ticketColor = newTicketColor;
 		localStorage.setItem("tickets", JSON.stringify(ticketsArr));
 	});
 }
 
+// Function to get the index of a ticket in the array
 function getTicketIdx(id) {
 	let ticketIdx = ticketsArr.findIndex(function (ticketObj) {
 		return ticketObj.ticketID === id;
 	});
-
-	console.log(ticketIdx);
-
+	// console.log(ticketIdx);
 	return ticketIdx;
 }
